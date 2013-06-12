@@ -45,20 +45,30 @@ def elem_to_internal(elem,strip=1):
     for key, value in elem.attrib.items():
         d['@'+key] = value
 
+    elemtag = str(elem.tag)
+    if '}' in elemtag:
+        elemtag = elemtag.split('}')[1]
+
     # loop over subelements to merge them
     for subelem in elem:
         v = elem_to_internal(subelem,strip=strip)
         tag = subelem.tag
-        value = v[tag]
+        dtag = str(tag)
+        if '{' in dtag:
+            dtag = dtag.split('}')[1]
+        try:
+            value = v[tag]
+        except KeyError:
+            value = v[dtag]
         try:
             # add to existing list for this tag
-            d[tag].append(value)
+            d[dtag].append(value)
         except AttributeError:
             # turn existing entry into a list
-            d[tag] = [d[tag], value]
+            d[dtag] = [d[dtag], value]
         except KeyError:
             # add a new non-list entry
-            d[tag] = value
+            d[dtag] = value
     text = elem.text
     tail = elem.tail
     if strip:
@@ -75,7 +85,7 @@ def elem_to_internal(elem,strip=1):
     else:
         # text is the value if no attributes
         d = text or None
-    return {elem.tag: d}
+    return {elemtag: d}
 
 
 def internal_to_elem(pfsh, factory=ET.Element):
